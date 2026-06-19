@@ -50,13 +50,29 @@ const SpeechModule = (() => {
     };
   }
 
-  function start(lang, onResult, onError, onStart, onEnd) {
+  async function start(lang, onResult, onError, onStart, onEnd) {
     if (isRecording) return;
+
+    // Request mic permission explicitly so the browser shows its native popup.
+    // SpeechRecognition alone often skips the popup and just fires not-allowed.
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(t => t.stop()); // release immediately; we only needed the grant
+    } catch (e) {
+      const denied = e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError';
+      onError && onError(
+        denied
+          ? 'マイクへのアクセスが拒否されました。\nブラウザのアドレスバー横の🔒アイコンをクリックし、マイクを「許可」に変更してからページを再読み込みしてください。\n\nMicrophone access denied.\nClick the 🔒 icon in the address bar, set Microphone to "Allow", then reload the page.'
+          : 'マイクが使用できません: ' + e.message
+      );
+      return;
+    }
+
     init(lang, onResult, onError, onStart, onEnd);
     try {
       recognition.start();
     } catch (e) {
-      onError && onError('録音を開始できませんでした。');
+      onError && onError('録音を開始できませんでした。 / Could not start recording.');
     }
   }
 
