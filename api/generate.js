@@ -58,7 +58,7 @@ module.exports = async function handler(req, res) {
     const prompt = buildPrompt(name, lang);
 
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash-preview-05-20',
+      model: 'gemini-2.5-flash-image',
       contents: prompt,
       config: {
         responseModalities: ['Text', 'Image'],
