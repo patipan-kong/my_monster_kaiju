@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>マイカイジュウ – My Kaiju</title>
+  <link rel="stylesheet" href="styles/style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+  <!-- ===== HEADER ===== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <h1 class="logo">
+        <span class="logo-kanji">マイカイジュウ</span>
+        <span class="logo-en">MY KAIJU</span>
+      </h1>
+      <p class="tagline">声でカイジュウに名前をつけ、AI画像生成で即座にオリジナルキャラクターを作成。</p>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- ===== STEP 1: Language ===== -->
+    <section class="card-panel" id="step-language">
+      <h2 class="step-title"><span class="step-num">01</span> 言語を選んでください</h2>
+      <div class="lang-buttons">
+        <button class="lang-btn active" data-lang="ja" id="btn-ja">🇯🇵 日本語</button>
+        <button class="lang-btn" data-lang="en" id="btn-en">🇺🇸 English</button>
+      </div>
+    </section>
+
+    <!-- ===== STEP 2 + 3: Voice Input & Name ===== -->
+    <section class="card-panel" id="step-voice">
+      <h2 class="step-title"><span class="step-num">02</span> <span id="step2-label">モンスターの名前</span></h2>
+
+      <div class="voice-controls">
+        <button class="voice-btn" id="btn-start-record">
+          <span class="mic-icon">🎙️</span>
+          <span id="voice-start-label">録音開始</span>
+        </button>
+        <button class="voice-btn secondary" id="btn-stop-record" disabled>
+          <span class="mic-icon">⏹️</span>
+          <span id="voice-stop-label">録音停止</span>
+        </button>
+      </div>
+
+      <div class="recording-indicator" id="recording-indicator">
+        <span class="pulse-dot"></span>
+        <span id="recording-label">録音中...</span>
+      </div>
+
+      <div class="name-input-group">
+        <label class="input-label" id="name-label">モンスター名</label>
+        <div class="input-row">
+          <input type="text" id="monster-name" class="name-input" placeholder="例: ゴジラマル" maxlength="40" />
+          <button class="clear-btn" id="btn-clear-name" title="クリア">✕</button>
+        </div>
+      </div>
+
+      <button class="generate-btn" id="btn-generate">
+        <span class="generate-icon">⚡</span>
+        <span id="generate-label">カイジュウ生成</span>
+      </button>
+
+      <div class="error-msg hidden" id="error-msg"></div>
+    </section>
+
+    <!-- ===== STEP 4: Card Display ===== -->
+    <section class="card-panel hidden" id="step-card">
+      <h2 class="step-title"><span class="step-num">03</span> <span id="step3-label">カイジュウカード</span></h2>
+
+      <div class="card-scene" id="card-scene">
+        <div class="card-wrapper" id="card-wrapper">
+
+          <!-- FRONT -->
+          <div class="card-face card-front" id="card-front">
+            <div class="card-rarity-banner" id="card-rarity-banner">COMMON</div>
+            <div class="card-type-row">
+              <span class="card-element-badge" id="card-element">🔥 Fire</span>
+              <span class="card-type-badge" id="card-type">Dragon</span>
+            </div>
+            <div class="card-image-wrap">
+              <img class="card-image" id="card-image" src="" alt="Monster" />
+              <div class="card-image-loader hidden" id="card-loader">
+                <div class="spinner"></div>
+                <span id="loader-label">生成中...</span>
+              </div>
+            </div>
+            <div class="card-name-row">
+              <span class="card-name" id="card-name-display">---</span>
+            </div>
+            <div class="card-stats" id="card-stats">
+              <div class="stat-row"><span class="stat-label">HP</span><div class="stat-bar-wrap"><div class="stat-bar" id="stat-hp"></div></div><span class="stat-val" id="val-hp">--</span></div>
+              <div class="stat-row"><span class="stat-label">ATK</span><div class="stat-bar-wrap"><div class="stat-bar" id="stat-atk"></div></div><span class="stat-val" id="val-atk">--</span></div>
+              <div class="stat-row"><span class="stat-label">DEF</span><div class="stat-bar-wrap"><div class="stat-bar" id="stat-def"></div></div><span class="stat-val" id="val-def">--</span></div>
+              <div class="stat-row"><span class="stat-label">SPD</span><div class="stat-bar-wrap"><div class="stat-bar" id="stat-spd"></div></div><span class="stat-val" id="val-spd">--</span></div>
+              <div class="stat-row"><span class="stat-label">INT</span><div class="stat-bar-wrap"><div class="stat-bar" id="stat-int"></div></div><span class="stat-val" id="val-int">--</span></div>
+            </div>
+            <div class="card-footer">マイカイジュウ &copy; 2025</div>
+          </div>
+
+          <!-- BACK -->
+          <div class="card-face card-back" id="card-back">
+            <div class="card-back-pattern"></div>
+            <div class="card-back-center">
+              <div class="card-back-silhouette" id="card-back-silhouette">👾</div>
+              <div class="card-back-logo">マイカイジュウ</div>
+              <div class="card-back-subtitle">MY KAIJU</div>
+              <div class="qr-deco">
+                <div class="qr-grid">
+                  <div></div><div class="qr-fill"></div><div></div>
+                  <div class="qr-fill"></div><div></div><div class="qr-fill"></div>
+                  <div></div><div class="qr-fill"></div><div></div>
+                </div>
+              </div>
+            </div>
+            <div class="card-back-border"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <p class="flip-hint" id="flip-hint">カードをクリックして裏返す ↔ Click card to flip</p>
+
+      <!-- Save buttons -->
+      <div class="save-buttons">
+        <button class="save-btn" id="btn-save-front">
+          <span>💾</span> <span id="save-front-label">表を保存</span>
+        </button>
+        <button class="save-btn" id="btn-save-back">
+          <span>💾</span> <span id="save-back-label">裏を保存</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== GALLERY ===== -->
+    <section class="card-panel" id="step-gallery">
+      <h2 class="step-title"><span class="step-num">04</span> <span id="gallery-title">ギャラリー</span></h2>
+      <div class="gallery-grid" id="gallery-grid">
+        <p class="gallery-empty" id="gallery-empty">まだカイジュウがいません。最初のカイジュウを作ろう！</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== MODAL: Gallery Card Viewer ===== -->
+  <div class="modal-overlay hidden" id="modal-overlay">
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close">✕</button>
+      <div class="card-scene modal-scene">
+        <div class="card-wrapper" id="modal-card-wrapper">
+          <div class="card-face card-front" id="modal-card-front">
+            <div class="card-rarity-banner" id="modal-rarity-banner"></div>
+            <div class="card-type-row">
+              <span class="card-element-badge" id="modal-element"></span>
+              <span class="card-type-badge" id="modal-type"></span>
+            </div>
+            <div class="card-image-wrap">
+              <img class="card-image" id="modal-image" src="" alt="Monster" />
+            </div>
+            <div class="card-name-row">
+              <span class="card-name" id="modal-name-display"></span>
+            </div>
+            <div class="card-stats" id="modal-stats">
+              <div class="stat-row"><span class="stat-label">HP</span><div class="stat-bar-wrap"><div class="stat-bar" id="modal-stat-hp"></div></div><span class="stat-val" id="modal-val-hp"></span></div>
+              <div class="stat-row"><span class="stat-label">ATK</span><div class="stat-bar-wrap"><div class="stat-bar" id="modal-stat-atk"></div></div><span class="stat-val" id="modal-val-atk"></span></div>
+              <div class="stat-row"><span class="stat-label">DEF</span><div class="stat-bar-wrap"><div class="stat-bar" id="modal-stat-def"></div></div><span class="stat-val" id="modal-val-def"></span></div>
+              <div class="stat-row"><span class="stat-label">SPD</span><div class="stat-bar-wrap"><div class="stat-bar" id="modal-stat-spd"></div></div><span class="stat-val" id="modal-val-spd"></span></div>
+              <div class="stat-row"><span class="stat-label">INT</span><div class="stat-bar-wrap"><div class="stat-bar" id="modal-stat-int"></div></div><span class="stat-val" id="modal-val-int"></span></div>
+            </div>
+            <div class="card-footer">マイカイジュウ &copy; 2025</div>
+          </div>
+          <div class="card-face card-back">
+            <div class="card-back-pattern"></div>
+            <div class="card-back-center">
+              <div class="card-back-silhouette" id="modal-silhouette">👾</div>
+              <div class="card-back-logo">マイカイジュウ</div>
+              <div class="card-back-subtitle">MY KAIJU</div>
+              <div class="qr-deco">
+                <div class="qr-grid">
+                  <div></div><div class="qr-fill"></div><div></div>
+                  <div class="qr-fill"></div><div></div><div class="qr-fill"></div>
+                  <div></div><div class="qr-fill"></div><div></div>
+                </div>
+              </div>
+            </div>
+            <div class="card-back-border"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/speech.js"></script>
+  <script src="js/card.js"></script>
+  <script src="js/gallery.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

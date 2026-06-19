@@ -1,0 +1,19 @@
+{
+  "name": "my-kaiju",
+  "version": "1.0.0",
+  "description": "マイカイジュウ – AI Kaiju Card Generator",
+  "main": "api/generate.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@google/genai": "^1.0.0"
+  },
+  "devDependencies": {
+    "vercel": "^39.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
