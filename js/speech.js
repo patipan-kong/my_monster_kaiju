@@ -34,7 +34,14 @@ const SpeechModule = (() => {
     recognition.onerror = (event) => {
       isRecording = false;
       if (event.error === 'no-speech') return;
-      onError && onError('音声認識エラー: ' + event.error);
+      const errorMessages = {
+        'not-allowed':     'マイクへのアクセスが拒否されました。ブラウザのアドレスバー横の🔒アイコンからマイクを許可してください。\n/ Microphone access denied. Allow microphone in your browser settings.',
+        'audio-capture':   'マイクが見つかりません。マイクが接続されているか確認してください。 / No microphone found.',
+        'network':         'ネットワークエラーが発生しました。 / Network error during speech recognition.',
+        'aborted':         null,
+      };
+      const msg = errorMessages[event.error];
+      if (msg) onError && onError(msg);
     };
 
     recognition.onend = () => {
