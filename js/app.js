@@ -106,17 +106,26 @@
     const speechLang = currentLang === 'ja' ? 'ja-JP' : 'en-US';
     SpeechModule.start(
       speechLang,
-      (transcript) => { monsterNameInput.value = transcript; },
+      (transcript) => {
+        monsterNameInput.value = transcript;
+        monsterNameInput.style.opacity = '';
+      },
       (err) => showError(err),
       () => {
         recordingIndicator.classList.add('active');
         btnStartRecord.disabled = true;
         btnStopRecord.disabled = false;
+        monsterNameInput.value = '';
       },
       () => {
         recordingIndicator.classList.remove('active');
         btnStartRecord.disabled = false;
         btnStopRecord.disabled = true;
+        monsterNameInput.style.opacity = '';
+      },
+      (interim) => {
+        monsterNameInput.value = interim;
+        monsterNameInput.style.opacity = '0.5';
       }
     );
   });

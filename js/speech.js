@@ -9,7 +9,7 @@ const SpeechModule = (() => {
     return !!SpeechRecognition;
   }
 
-  function init(lang, onResult, onError, onStart, onEnd) {
+  function init(lang, onResult, onError, onStart, onEnd, onInterim) {
     if (!isSupported()) {
       onError('このブラウザは音声認識をサポートしていません。 / Speech recognition not supported.');
       return;
@@ -18,8 +18,8 @@ const SpeechModule = (() => {
     recognition = new SpeechRecognition();
     recognition.lang = lang;
     recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 3;
 
     recognition.onstart = () => {
       isRecording = true;
@@ -27,8 +27,24 @@ const SpeechModule = (() => {
     };
 
     recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      onResult && onResult(transcript);
+      let interimTranscript = '';
+      let finalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        const text = result[0].transcript;
+        if (result.isFinal) {
+          finalTranscript += text;
+        } else {
+          interimTranscript += text;
+        }
+      }
+
+      if (finalTranscript) {
+        onResult && onResult(finalTranscript);
+      } else if (interimTranscript) {
+        onInterim && onInterim(interimTranscript);
+      }
     };
 
     recognition.onerror = (event) => {
@@ -50,7 +66,7 @@ const SpeechModule = (() => {
     };
   }
 
-  async function start(lang, onResult, onError, onStart, onEnd) {
+  async function start(lang, onResult, onError, onStart, onEnd, onInterim) {
     if (isRecording) return;
 
     // Request mic permission explicitly so the browser shows its native popup.
@@ -68,7 +84,7 @@ const SpeechModule = (() => {
       return;
     }
 
-    init(lang, onResult, onError, onStart, onEnd);
+    init(lang, onResult, onError, onStart, onEnd, onInterim);
     try {
       recognition.start();
     } catch (e) {
