@@ -109,13 +109,21 @@
       (transcript) => {
         monsterNameInput.value = transcript;
         monsterNameInput.style.opacity = '';
+        hideError();
       },
-      (err) => showError(err),
+      (err) => {
+        recordingIndicator.classList.remove('active');
+        btnStartRecord.disabled = false;
+        btnStopRecord.disabled = true;
+        monsterNameInput.style.opacity = '';
+        showError(err);
+      },
       () => {
         recordingIndicator.classList.add('active');
         btnStartRecord.disabled = true;
         btnStopRecord.disabled = false;
         monsterNameInput.value = '';
+        hideError();
       },
       () => {
         recordingIndicator.classList.remove('active');
@@ -126,6 +134,14 @@
       (interim) => {
         monsterNameInput.value = interim;
         monsterNameInput.style.opacity = '0.5';
+      },
+      (attempt) => {
+        const msg = currentLang === 'ja'
+          ? `接続中... (${attempt}/3)`
+          : `Reconnecting... (${attempt}/3)`;
+        monsterNameInput.value = '';
+        monsterNameInput.placeholder = msg;
+        setTimeout(() => { monsterNameInput.placeholder = monsterNameInput.placeholder === msg ? (currentLang === 'ja' ? '例: ゴジラマル' : 'e.g. Thunderfang') : monsterNameInput.placeholder; }, 2000);
       }
     );
   });

@@ -2,6 +2,9 @@
 const SpeechModule = (() => {
   let recognition = null;
   let isRecording = false;
+  let retryCount = 0;
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY_MS = 800;
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -9,7 +12,7 @@ const SpeechModule = (() => {
     return !!SpeechRecognition;
   }
 
-  function init(lang, onResult, onError, onStart, onEnd, onInterim) {
+  function init(lang, onResult, onError, onStart, onEnd, onInterim, onRetry) {
     if (!isSupported()) {
       onError('このブラウザは音声認識をサポートしていません。 / Speech recognition not supported.');
       return;
@@ -27,6 +30,7 @@ const SpeechModule = (() => {
     };
 
     recognition.onresult = (event) => {
+      retryCount = 0; // successful result resets retry counter
       let interimTranscript = '';
       let finalTranscript = '';
 
@@ -49,12 +53,26 @@ const SpeechModule = (() => {
 
     recognition.onerror = (event) => {
       isRecording = false;
-      if (event.error === 'no-speech') return;
+
+      if (event.error === 'no-speech' || event.error === 'aborted') return;
+
+      if (event.error === 'network' && retryCount < MAX_RETRIES) {
+        retryCount++;
+        onRetry && onRetry(retryCount);
+        setTimeout(() => {
+          if (!isRecording) {
+            init(lang, onResult, onError, onStart, onEnd, onInterim, onRetry);
+            try { recognition.start(); } catch (_) {}
+          }
+        }, RETRY_DELAY_MS);
+        return;
+      }
+
+      retryCount = 0;
       const errorMessages = {
-        'not-allowed':     'マイクへのアクセスが拒否されました。ブラウザのアドレスバー横の🔒アイコンからマイクを許可してください。\n/ Microphone access denied. Allow microphone in your browser settings.',
-        'audio-capture':   'マイクが見つかりません。マイクが接続されているか確認してください。 / No microphone found.',
-        'network':         'ネットワークエラーが発生しました。 / Network error during speech recognition.',
-        'aborted':         null,
+        'not-allowed':  'マイクへのアクセスが拒否されました。ブラウザのアドレスバー横の🔒アイコンからマイクを許可してください。\n/ Microphone access denied. Allow microphone in your browser settings.',
+        'audio-capture':'マイクが見つかりません。マイクが接続されているか確認してください。 / No microphone found.',
+        'network':      'ネットワークエラーが続いています。接続を確認してからもう一度お試しください。\n/ Persistent network error. Check your connection and try again.',
       };
       const msg = errorMessages[event.error];
       if (msg) onError && onError(msg);
@@ -62,12 +80,14 @@ const SpeechModule = (() => {
 
     recognition.onend = () => {
       isRecording = false;
-      onEnd && onEnd();
+      // Only fire onEnd when we're not about to retry
+      if (retryCount === 0) onEnd && onEnd();
     };
   }
 
-  async function start(lang, onResult, onError, onStart, onEnd, onInterim) {
+  async function start(lang, onResult, onError, onStart, onEnd, onInterim, onRetry) {
     if (isRecording) return;
+    retryCount = 0;
 
     // Request mic permission explicitly so the browser shows its native popup.
     // SpeechRecognition alone often skips the popup and just fires not-allowed.
@@ -84,7 +104,7 @@ const SpeechModule = (() => {
       return;
     }
 
-    init(lang, onResult, onError, onStart, onEnd, onInterim);
+    init(lang, onResult, onError, onStart, onEnd, onInterim, onRetry);
     try {
       recognition.start();
     } catch (e) {
@@ -93,6 +113,7 @@ const SpeechModule = (() => {
   }
 
   function stop() {
+    retryCount = MAX_RETRIES; // prevent any pending retry from firing after manual stop
     if (recognition && isRecording) {
       recognition.stop();
     }
