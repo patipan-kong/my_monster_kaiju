@@ -20,10 +20,10 @@ const CardModule = (() => {
   ];
 
   const RARITIES = [
-    { name: 'COMMON',    weight: 50, cls: 'rarity-common' },
+    { name: 'COMMON',    weight: 35, cls: 'rarity-common' },
     { name: 'RARE',      weight: 30, cls: 'rarity-rare' },
-    { name: 'EPIC',      weight: 15, cls: 'rarity-epic' },
-    { name: 'LEGENDARY', weight: 5,  cls: 'rarity-legendary' },
+    { name: 'EPIC',      weight: 20, cls: 'rarity-epic' },
+    { name: 'LEGENDARY', weight: 15,  cls: 'rarity-legendary' },
   ];
 
   function rand(min, max) {
@@ -91,9 +91,6 @@ const CardModule = (() => {
     // Stats
     applyStats(prefix, stats);
 
-    // Silhouette on back
-    const sil = document.getElementById(`${prefix}silhouette`);
-    if (sil) sil.textContent = type.emoji;
   }
 
   function buildCardData(name, imageDataUrl) {
@@ -108,14 +105,5 @@ const CardModule = (() => {
     };
   }
 
-  function initFlip(wrapperId) {
-    const wrapper = document.getElementById(wrapperId);
-    if (!wrapper) return;
-    const scene = wrapper.closest('.card-scene');
-    scene && scene.addEventListener('click', () => {
-      wrapper.classList.toggle('flipped');
-    });
-  }
-
-  return { buildCardData, populateCard, initFlip };
+  return { buildCardData, populateCard };
 })();

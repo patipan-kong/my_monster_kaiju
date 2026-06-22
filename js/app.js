@@ -19,9 +19,6 @@
       namePlaceholder: '例: ゴジラマル',
       generate:     'カイジュウ生成',
       loaderLabel:  '生成中...',
-      flipHint:     'カードをクリックして裏返す ↔ Click card to flip',
-      saveFront:    '表を保存',
-      saveBack:     '裏を保存',
       galleryEmpty: 'まだカイジュウがいません。最初のカイジュウを作ろう！',
       errNoName:    'モンスター名を入力してください。',
       errServer:    '生成に失敗しました。もう一度試してください。',
@@ -37,9 +34,6 @@
       namePlaceholder: 'e.g. Thunderfang',
       generate:     'Generate Kaiju',
       loaderLabel:  'Generating...',
-      flipHint:     'Click card to flip ↔ カードをクリックして裏返す',
-      saveFront:    'Save Front',
-      saveBack:     'Save Back',
       galleryEmpty: 'No Kaiju yet. Create your first monster!',
       errNoName:    'Please enter a monster name.',
       errServer:    'Generation failed. Please try again.',
@@ -63,27 +57,23 @@
   const stepCard         = $('step-card');
   const cardLoader       = $('card-loader');
   const cardImage        = $('card-image');
-  const btnSaveFront     = $('btn-save-front');
-  const btnSaveBack      = $('btn-save-back');
+  const btnSaveCard      = $('btn-save-card');
   const modalOverlay     = $('modal-overlay');
   const modalClose       = $('modal-close');
 
   // ── Language switch ────────────────────────────────────
   function applyLang() {
     const s = I18N[currentLang];
-    $('step2-label').textContent      = s.step2;
-    $('step3-label').textContent      = s.step3;
-    $('gallery-title').textContent    = s.galleryTitle;
+    $('step2-label').textContent       = s.step2;
+    $('step3-label').textContent       = s.step3;
+    $('gallery-title').textContent     = s.galleryTitle;
     $('voice-start-label').textContent = s.voiceStart;
-    $('voice-stop-label').textContent = s.voiceStop;
-    $('recording-label').textContent  = s.recording;
-    $('name-label').textContent       = s.nameLabel;
-    monsterNameInput.placeholder      = s.namePlaceholder;
-    $('generate-label').textContent   = s.generate;
-    $('loader-label').textContent     = s.loaderLabel;
-    $('flip-hint').textContent        = s.flipHint;
-    $('save-front-label').textContent = s.saveFront;
-    $('save-back-label').textContent  = s.saveBack;
+    $('voice-stop-label').textContent  = s.voiceStop;
+    $('recording-label').textContent   = s.recording;
+    $('name-label').textContent        = s.nameLabel;
+    monsterNameInput.placeholder       = s.namePlaceholder;
+    $('generate-label').textContent    = s.generate;
+    $('loader-label').textContent      = s.loaderLabel;
     GalleryModule.render(currentLang, openModalCard);
   }
 
@@ -195,7 +185,7 @@
     stepCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  function finishCard(name, imageDataUrl) {
+  async function finishCard(name, imageDataUrl) {
     cardLoader.classList.add('hidden');
     cardImage.src = imageDataUrl;
     cardImage.style.display = 'block';
@@ -205,28 +195,16 @@
 
     CardModule.populateCard('card-', cardData, currentLang);
 
-    GalleryModule.addCard(cardData);
+    await GalleryModule.addCard(cardData);
     GalleryModule.render(currentLang, openModalCard);
 
     setGenerating(false);
   }
 
-  // ── Card flip init ─────────────────────────────────────
-  CardModule.initFlip('card-wrapper');
-
   // ── Save PNG ───────────────────────────────────────────
-  async function saveFace(faceId, filename) {
-    const el = document.getElementById(faceId);
+  btnSaveCard.addEventListener('click', async () => {
+    const el = document.getElementById('card-front');
     if (!el) return;
-    // Temporarily un-flip to capture correct face
-    const wrapper = $('card-wrapper');
-    const wasFlipped = wrapper.classList.contains('flipped');
-
-    if (faceId === 'card-front' && wasFlipped)  wrapper.classList.remove('flipped');
-    if (faceId === 'card-back'  && !wasFlipped) wrapper.classList.add('flipped');
-
-    await new Promise(r => setTimeout(r, 350)); // wait for flip animation
-
     try {
       const canvas = await html2canvas(el, {
         backgroundColor: null,
@@ -235,35 +213,18 @@
         allowTaint: true,
       });
       const link = document.createElement('a');
-      link.download = filename;
+      link.download = `${currentCardData ? currentCardData.name : 'kaiju'}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (e) {
       console.error('Save failed', e);
     }
-
-    // Restore state
-    if (faceId === 'card-front' && wasFlipped)  wrapper.classList.add('flipped');
-    if (faceId === 'card-back'  && !wasFlipped) wrapper.classList.remove('flipped');
-  }
-
-  btnSaveFront.addEventListener('click', () => {
-    const name = currentCardData ? currentCardData.name : 'kaiju';
-    saveFace('card-front', `${name}_front.png`);
-  });
-
-  btnSaveBack.addEventListener('click', () => {
-    const name = currentCardData ? currentCardData.name : 'kaiju';
-    saveFace('card-back', `${name}_back.png`);
   });
 
   // ── Modal (gallery viewer) ─────────────────────────────
-  CardModule.initFlip('modal-card-wrapper');
 
   function openModalCard(cardData) {
     CardModule.populateCard('modal-', cardData, currentLang);
-    // Reset flip state
-    $('modal-card-wrapper').classList.remove('flipped');
     modalOverlay.classList.remove('hidden');
   }
 

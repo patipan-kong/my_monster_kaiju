@@ -1,6 +1,7 @@
 /* Gallery: localStorage persistence + rendering */
 const GalleryModule = (() => {
   const STORAGE_KEY = 'mykaiju_gallery';
+  const THUMB_MAX = 400; // max px dimension stored in localStorage
 
   function load() {
     try {
@@ -14,10 +15,38 @@ const GalleryModule = (() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }
 
-  function addCard(cardData) {
+  function compressImage(dataUrl) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = Math.min(THUMB_MAX / img.width, THUMB_MAX / img.height, 1);
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.72));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
+  async function addCard(cardData) {
+    const compressed = await compressImage(cardData.imageDataUrl);
+    const item = { ...cardData, imageDataUrl: compressed, id: Date.now() };
     const items = load();
-    items.unshift({ ...cardData, id: Date.now() });
-    save(items);
+    items.unshift(item);
+
+    // Drop oldest cards until it fits within quota
+    while (items.length > 0) {
+      try {
+        save(items);
+        break;
+      } catch (e) {
+        if (items.length === 1) break; // can't shrink further
+        items.pop();
+      }
+    }
   }
 
   function formatDate(iso) {
@@ -27,7 +56,6 @@ const GalleryModule = (() => {
 
   function render(lang, onOpenCard) {
     const grid = document.getElementById('gallery-grid');
-    const empty = document.getElementById('gallery-empty');
     if (!grid) return;
 
     const items = load();
